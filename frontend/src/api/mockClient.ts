@@ -80,9 +80,9 @@ function saveConnections(projectId: string, connections: Connection[]) {
 }
 
 export const mockProjectsApi = {
-  getAll: async (userId: string) => {
+  getAll: async () => {
     await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
-    return { data: getProjects().filter(p => p.user_id === userId) };
+    return { data: getProjects() };
   },
   getById: async (projectId: string) => {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -95,12 +95,11 @@ export const mockProjectsApi = {
     
     return { data: { ...project, scenes, connections } };
   },
-  create: async (data: { user_id: string; title: string }) => {
+  create: async (data: { title: string }) => {
     await new Promise(resolve => setTimeout(resolve, 300));
     const projects = getProjects();
     const newProject: Project = {
       id: `project-${Date.now()}`,
-      user_id: data.user_id,
       title: data.title,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

@@ -32,9 +32,9 @@ apiClient.interceptors.response.use(
 
 // Projects API
 export const projectsApi = useMock ? mockProjectsApi : {
-  getAll: (userId: string) => apiClient.get(`/api/projects/?user_id=${userId}`),
+  getAll: () => apiClient.get(`/api/projects/`),
   getById: (projectId: string) => apiClient.get(`/api/projects/${projectId}/full`),
-  create: (data: { user_id: string; title: string }) => apiClient.post('/api/projects/', data),
+  create: (data: { title: string }) => apiClient.post('/api/projects/', data),
   update: (projectId: string, data: { title: string }) => apiClient.put(`/api/projects/${projectId}`, data),
   delete: (projectId: string) => apiClient.delete(`/api/projects/${projectId}`),
 };

@@ -42,7 +42,6 @@ export default function StoryboardEditor() {
       
       setCurrentProject({
         id: projectData.id,
-        user_id: projectData.user_id,
         title: projectData.title,
         created_at: projectData.created_at,
         updated_at: projectData.updated_at,

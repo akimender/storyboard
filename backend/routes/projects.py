@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
+from datetime import datetime
 from database import get_db
 from models.project import Project
 from models.scene import Scene
@@ -11,7 +12,6 @@ import uuid
 router = APIRouter()
 
 class ProjectCreate(BaseModel):
-    user_id: str
     title: str
 
 class ProjectUpdate(BaseModel):
@@ -19,10 +19,13 @@ class ProjectUpdate(BaseModel):
 
 class ProjectResponse(BaseModel):
     id: str
-    user_id: str
     title: str
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
+
+    @field_serializer('created_at', 'updated_at')
+    def serialize_datetime(self, dt: datetime, _info):
+        return dt.isoformat()
 
     class Config:
         from_attributes = True
@@ -32,9 +35,9 @@ class ProjectFullResponse(ProjectResponse):
     connections: List[dict]
 
 @router.get("/", response_model=List[ProjectResponse])
-def get_projects(user_id: str, db: Session = Depends(get_db)):
-    """Get all projects for a user"""
-    projects = db.query(Project).filter(Project.user_id == user_id).all()
+def get_projects(db: Session = Depends(get_db)):
+    """Get all projects"""
+    projects = db.query(Project).all()
     return projects
 
 @router.get("/{project_id}/full", response_model=ProjectFullResponse)
@@ -58,7 +61,6 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     """Create a new project"""
     db_project = Project(
         id=str(uuid.uuid4()),
-        user_id=project.user_id,
         title=project.title
     )
     db.add(db_project)

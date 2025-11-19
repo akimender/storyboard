@@ -15,8 +15,26 @@ interface SceneNodeProps {
 }
 
 function SceneNode({ scene, isSelected, onSelect, onDragEnd, onConnectionStart }: SceneNodeProps) {
-  const [image] = useImage(scene.image_url || '');
+  const [image, imageStatus] = useImage(scene.image_url || '', { crossOrigin: 'anonymous' });
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Debug image loading
+  useEffect(() => {
+    if (scene.image_url) {
+      console.log('Scene image URL:', scene.image_url);
+      console.log('Image status:', imageStatus);
+      if (imageStatus === 'failed') {
+        console.error('Failed to load image:', scene.image_url);
+        console.error('This might be a CORS issue. Check S3 bucket CORS configuration.');
+      } else if (imageStatus === 'loaded') {
+        console.log('Image loaded successfully:', scene.image_url);
+      } else if (imageStatus === 'loading') {
+        console.log('Loading image...', scene.image_url);
+      }
+    } else {
+      console.warn('Scene has no image_url:', scene);
+    }
+  }, [imageStatus, scene.image_url]);
 
   return (
     <Group
@@ -42,14 +60,30 @@ function SceneNode({ scene, isSelected, onSelect, onDragEnd, onConnectionStart }
       />
       
       {/* Scene image */}
-      {image && (
+      {image ? (
         <Image
           image={image}
           width={scene.width}
           height={scene.height * 0.7}
           cornerRadius={[8, 8, 0, 0]}
         />
-      )}
+      ) : scene.image_url && imageStatus === 'failed' ? (
+        // Show placeholder if image failed to load
+        <Rect
+          width={scene.width}
+          height={scene.height * 0.7}
+          fill="#e5e7eb"
+          cornerRadius={[8, 8, 0, 0]}
+        />
+      ) : scene.image_url ? (
+        // Show loading indicator
+        <Rect
+          width={scene.width}
+          height={scene.height * 0.7}
+          fill="#f3f4f6"
+          cornerRadius={[8, 8, 0, 0]}
+        />
+      ) : null}
       
       {/* Caption area */}
       <Rect

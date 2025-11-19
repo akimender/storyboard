@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
+from datetime import datetime
 from database import get_db
 from models.connection import Connection
 import uuid
@@ -23,7 +24,11 @@ class ConnectionResponse(BaseModel):
     from_scene_id: str
     to_scene_id: str
     label: Optional[str]
-    created_at: str
+    created_at: datetime
+
+    @field_serializer('created_at')
+    def serialize_datetime(self, dt: datetime, _info):
+        return dt.isoformat()
 
     class Config:
         from_attributes = True

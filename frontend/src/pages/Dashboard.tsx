@@ -12,10 +12,6 @@ export default function Dashboard() {
   const [editTitle, setEditTitle] = useState('');
   const navigate = useNavigate();
 
-  // For demo purposes, using a default user_id
-  // In production, this would come from auth
-  const userId = 'demo-user-1';
-
   useEffect(() => {
     loadProjects();
   }, []);
@@ -23,7 +19,7 @@ export default function Dashboard() {
   const loadProjects = async () => {
     try {
       setLoading(true);
-      const response = await projectsApi.getAll(userId);
+      const response = await projectsApi.getAll();
       setProjects(response.data || []);
     } catch (error) {
       console.error('Failed to load projects:', error);
@@ -40,7 +36,6 @@ export default function Dashboard() {
     try {
       setIsCreating(true);
       const response = await projectsApi.create({
-        user_id: userId,
         title: newProjectTitle,
       });
       setProjects([...projects, response.data]);
