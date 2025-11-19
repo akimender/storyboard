@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStoryboardStore } from '../store/storyboardStore';
-import { scenesApi, generateImageApi } from '../api/client';
+import { generateImageApi } from '../api/client';
 
 interface SceneCreatorProps {
   projectId: string;
@@ -9,7 +9,7 @@ interface SceneCreatorProps {
 export default function SceneCreator({ projectId }: SceneCreatorProps) {
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const { addScene, scenes } = useStoryboardStore();
+  const { addScene, scenes, currentProject } = useStoryboardStore();
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -20,12 +20,13 @@ export default function SceneCreator({ projectId }: SceneCreatorProps) {
     try {
       setIsGenerating(true);
       
-      // Generate image
+      // Generate image (still uses backend API)
       const imageResponse = await generateImageApi.generate(prompt, projectId);
       const imageUrl = imageResponse.data.image_url;
       
-      // Create scene
-      const sceneResponse = await scenesApi.create({
+      // Create scene in memory (no backend save)
+      const newScene = {
+        id: `scene-${Date.now()}`,
         project_id: projectId,
         prompt_text: prompt,
         caption: prompt,
@@ -34,9 +35,10 @@ export default function SceneCreator({ projectId }: SceneCreatorProps) {
         y: Math.random() * 400 + 100,
         width: 300,
         height: 200,
-      });
+        created_at: new Date().toISOString(),
+      };
       
-      addScene(sceneResponse.data);
+      addScene(newScene);
       setPrompt('');
     } catch (error: any) {
       console.error('Failed to generate scene:', error);

@@ -202,25 +202,22 @@ export default function StoryboardCanvas() {
       setIsConnecting(false);
       setConnectingFromSceneId(null);
     } else if (isConnecting && connectingFromSceneId && connectingFromSceneId !== sceneId) {
-      // Complete connection
-      try {
-        const fromScene = scenes.find((s) => s.id === connectingFromSceneId);
-        if (!fromScene) return;
-        
-        const { connectionsApi } = await import('../api/client');
-        const response = await connectionsApi.create({
-          project_id: fromScene.project_id,
-          from_scene_id: connectingFromSceneId,
-          to_scene_id: sceneId,
-        });
-        
-        addConnection(response.data);
-        setIsConnecting(false);
-        setConnectingFromSceneId(null);
-      } catch (error) {
-        console.error('Failed to create connection:', error);
-        alert('Failed to create connection');
-      }
+      // Complete connection (in memory only)
+      const fromScene = scenes.find((s) => s.id === connectingFromSceneId);
+      if (!fromScene) return;
+      
+      const newConnection = {
+        id: `conn-${Date.now()}`,
+        project_id: fromScene.project_id,
+        from_scene_id: connectingFromSceneId,
+        to_scene_id: sceneId,
+        label: undefined,
+        created_at: new Date().toISOString(),
+      };
+      
+      addConnection(newConnection);
+      setIsConnecting(false);
+      setConnectingFromSceneId(null);
     } else {
       // Start connection
       setIsConnecting(true);

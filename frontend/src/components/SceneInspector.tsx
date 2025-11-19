@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStoryboardStore } from '../store/storyboardStore';
-import { scenesApi, generateImageApi } from '../api/client';
+import { generateImageApi } from '../api/client';
 
 export default function SceneInspector() {
   const { selectedSceneId, scenes, updateScene, deleteScene } = useStoryboardStore();
@@ -16,15 +16,10 @@ export default function SceneInspector() {
     }
   }, [selectedScene]);
 
-  const handleUpdateCaption = async (newCaption: string) => {
+  const handleUpdateCaption = (newCaption: string) => {
     if (!selectedScene) return;
-    
-    try {
-      await scenesApi.update(selectedScene.id, { caption: newCaption });
-      updateScene(selectedScene.id, { caption: newCaption });
-    } catch (error) {
-      console.error('Failed to update caption:', error);
-    }
+    // Update in memory only (no backend save)
+    updateScene(selectedScene.id, { caption: newCaption });
   };
 
   const handleRegenerate = async () => {
@@ -32,12 +27,13 @@ export default function SceneInspector() {
     
     try {
       setIsRegenerating(true);
+      // Generate new image (still uses backend API)
       const response = await generateImageApi.generate(
         selectedScene.prompt_text,
         selectedScene.project_id
       );
       
-      await scenesApi.update(selectedScene.id, { image_url: response.data.image_url });
+      // Update in memory only (no backend save)
       updateScene(selectedScene.id, { image_url: response.data.image_url });
     } catch (error) {
       console.error('Failed to regenerate image:', error);
@@ -47,17 +43,12 @@ export default function SceneInspector() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!selectedScene) return;
     if (!confirm('Are you sure you want to delete this scene?')) return;
     
-    try {
-      await scenesApi.delete(selectedScene.id);
-      deleteScene(selectedScene.id);
-    } catch (error) {
-      console.error('Failed to delete scene:', error);
-      alert('Failed to delete scene');
-    }
+    // Delete from memory only (no backend save)
+    deleteScene(selectedScene.id);
   };
 
   if (!selectedScene) {
