@@ -24,6 +24,25 @@ export default function SceneCreator({ projectId }: SceneCreatorProps) {
       const imageResponse = await generateImageApi.generate(prompt, projectId);
       const imageUrl = imageResponse.data.image_url;
       
+      console.log('✅ Image generated, URL:', imageUrl);
+      console.log('Testing image URL accessibility...');
+      
+      // Test if image URL is accessible (without CORS first)
+      const img = new Image();
+      img.onload = () => {
+        console.log('✅ Image URL is accessible and loads successfully');
+        console.log('Image dimensions:', img.width, 'x', img.height);
+      };
+      img.onerror = (error) => {
+        console.error('❌ Image URL failed to load:', error);
+        console.error('This is likely a CORS issue. Check S3 bucket CORS configuration.');
+        console.error('Image URL:', imageUrl);
+        console.error('Try opening this URL directly in a new tab to verify it works');
+        alert('Image generated but failed to load. Check browser console for details. This is likely a CORS configuration issue with your S3 bucket.');
+      };
+      // Try without crossOrigin first
+      img.src = imageUrl;
+      
       // Create scene in memory (no backend save)
       const newScene = {
         id: `scene-${Date.now()}`,
@@ -38,6 +57,7 @@ export default function SceneCreator({ projectId }: SceneCreatorProps) {
         created_at: new Date().toISOString(),
       };
       
+      console.log('Creating scene with image_url:', newScene.image_url);
       addScene(newScene);
       setPrompt('');
     } catch (error: any) {

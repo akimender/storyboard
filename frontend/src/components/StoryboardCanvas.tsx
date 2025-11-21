@@ -15,22 +15,41 @@ interface SceneNodeProps {
 }
 
 function SceneNode({ scene, isSelected, onSelect, onDragEnd, onConnectionStart }: SceneNodeProps) {
-  const [image, imageStatus] = useImage(scene.image_url || '', { crossOrigin: 'anonymous' });
+  // Try without crossOrigin first - S3 should handle CORS via bucket policy
+  const [image, imageStatus] = useImage(scene.image_url || '');
   const [isHovered, setIsHovered] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   
-  // Debug image loading
+  // Debug image loading with timeout detection
   useEffect(() => {
     if (scene.image_url) {
       console.log('Scene image URL:', scene.image_url);
       console.log('Image status:', imageStatus);
+      
+      // Set a timeout to detect if image is stuck loading
+      const timeout = setTimeout(() => {
+        if (imageStatus === 'loading') {
+          console.warn('Image loading timeout - may be CORS issue');
+          console.warn('Image URL:', scene.image_url);
+          setLoadError(true);
+        }
+      }, 10000); // 10 second timeout
+      
       if (imageStatus === 'failed') {
         console.error('Failed to load image:', scene.image_url);
         console.error('This might be a CORS issue. Check S3 bucket CORS configuration.');
+        setLoadError(true);
+        clearTimeout(timeout);
       } else if (imageStatus === 'loaded') {
         console.log('Image loaded successfully:', scene.image_url);
+        setLoadError(false);
+        clearTimeout(timeout);
       } else if (imageStatus === 'loading') {
         console.log('Loading image...', scene.image_url);
+        setLoadError(false);
       }
+      
+      return () => clearTimeout(timeout);
     } else {
       console.warn('Scene has no image_url:', scene);
     }
@@ -67,23 +86,68 @@ function SceneNode({ scene, isSelected, onSelect, onDragEnd, onConnectionStart }
           height={scene.height * 0.7}
           cornerRadius={[8, 8, 0, 0]}
         />
-      ) : scene.image_url && imageStatus === 'failed' ? (
-        // Show placeholder if image failed to load
+      ) : (scene.image_url && (imageStatus === 'failed' || loadError)) ? (
+        // Show error placeholder if image failed to load
+        <Group>
+          <Rect
+            width={scene.width}
+            height={scene.height * 0.7}
+            fill="#fee2e2"
+            cornerRadius={[8, 8, 0, 0]}
+          />
+          <Text
+            x={scene.width / 2}
+            y={scene.height * 0.35}
+            text="Image failed to load"
+            fontSize={12}
+            fill="#dc2626"
+            align="center"
+            verticalAlign="middle"
+            offsetX={scene.width / 2}
+            offsetY={6}
+          />
+          <Text
+            x={scene.width / 2}
+            y={scene.height * 0.35 + 20}
+            text="Check CORS settings"
+            fontSize={10}
+            fill="#991b1b"
+            align="center"
+            verticalAlign="middle"
+            offsetX={scene.width / 2}
+            offsetY={5}
+          />
+        </Group>
+      ) : scene.image_url ? (
+        // Show loading indicator
+        <Group>
+          <Rect
+            width={scene.width}
+            height={scene.height * 0.7}
+            fill="#f3f4f6"
+            cornerRadius={[8, 8, 0, 0]}
+          />
+          <Text
+            x={scene.width / 2}
+            y={scene.height * 0.35}
+            text="Loading image..."
+            fontSize={12}
+            fill="#6b7280"
+            align="center"
+            verticalAlign="middle"
+            offsetX={scene.width / 2}
+            offsetY={6}
+          />
+        </Group>
+      ) : (
+        // No image URL
         <Rect
           width={scene.width}
           height={scene.height * 0.7}
           fill="#e5e7eb"
           cornerRadius={[8, 8, 0, 0]}
         />
-      ) : scene.image_url ? (
-        // Show loading indicator
-        <Rect
-          width={scene.width}
-          height={scene.height * 0.7}
-          fill="#f3f4f6"
-          cornerRadius={[8, 8, 0, 0]}
-        />
-      ) : null}
+      )}
       
       {/* Caption area */}
       <Rect
